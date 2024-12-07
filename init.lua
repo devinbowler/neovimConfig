@@ -1,3 +1,5 @@
+-- Lua config for NeoVim.
+
 -- Prepend lazy.nvim to the runtimepath
 vim.opt.rtp:prepend("C:/Users/devin/.local/share/nvim/lazy/lazy.nvim")
 

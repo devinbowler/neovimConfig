@@ -75,47 +75,6 @@ require("lazy").setup({
     run = ":TSUpdate",
   },
 
-  -- Avante.nvim (lazy-loaded)
-  {
-    "yetone/avante.nvim",
-    event = "VeryLazy",
-    lazy = false,
-    version = false,
-    opts = {
-      provider = "openai",
-      openai = {
-        model = "gpt-4o-mini",
-      },
-      cache_path = "C:/Users/devin/AppData/Local/nvim/avante_cache",
-      auto_suggestions_provider = "openai",
-      mappings = {
-        suggestion = {
-          accept = "<M-l>",
-          next = "<M-]>",
-          prev = "<M-[>",
-          dismiss = "<C-]>",
-        },
-        sidebar = {
-          apply_all = "A",
-          apply_cursor = "a",
-          switch_windows = "<Tab>",
-        },
-      },
-      behaviour = {
-        auto_suggestions = false,
-        auto_apply_diff_after_generation = false,
-      },
-    },
-    build = "make",
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "stevearc/dressing.nvim",
-      "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
-      "nvim-tree/nvim-web-devicons",
-    },
-  },
-
   -- Auto-completion
   {
     "hrsh7th/nvim-cmp", -- Completion plugin

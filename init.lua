@@ -1,5 +1,3 @@
--- Lua config for NeoVim.
-
 -- Prepend lazy.nvim to the runtimepath
 vim.opt.rtp:prepend("C:/Users/devin/.local/share/nvim/lazy/lazy.nvim")
 
@@ -34,14 +32,27 @@ require("lazy").setup({
   },
 
   -- Themes and appearance
+--  {
+--    "sixfourtwelve/bore.vim", -- Bore theme
+--    lazy = false,
+--    config = function()
+--      -- Enable the Bore theme
+--      vim.opt.background = "dark" -- Set the background to dark
+--      vim.cmd("colorscheme bore") -- Set the Bore colorscheme
+      -- Enable true colors for the best experience
+--      if vim.fn.has("termguicolors") == 1 then
+--        vim.opt.termguicolors = true
+--      end
+--    end,
+--  },
   {
-    "sixfourtwelve/bore.vim", -- Bore theme
+    "liuchengxu/space-vim-theme",
     lazy = false,
     config = function()
-      vim.opt.background = "dark"
-      vim.cmd("colorscheme bore")
+      vim.opt.background = "dark" -- Ensure dark mode
+      vim.cmd("colorscheme space_vim_theme") -- Set the Space-Vim theme
       if vim.fn.has("termguicolors") == 1 then
-        vim.opt.termguicolors = true
+        vim.opt.termguicolors = true -- Enable true colors
       end
     end,
   },
@@ -51,28 +62,23 @@ require("lazy").setup({
     "morhetz/gruvbox",
     lazy = false, -- Load immediately
   },
-  {
-    "sainnhe/everforest",
-    lazy = false, -- Load immediately
-  },
 
-  -- Markdown plugins
+
+  -- Markdown Plugins
   {
-    "plasticboy/vim-markdown", -- Syntax highlighting and conceal for markdown
+    "plasticboy/vim-markdown", -- Popular Markdown plugin
     lazy = false,
+    ft = "markdown", -- Load only for Markdown files
   },
   {
-    "ellisonleao/glow.nvim", -- Render Markdown in terminal
-    lazy = true,
-    config = function()
-      require('glow').setup()
-    end,
-    cmd = "Glow", -- Load only when Glow is called
+    "preservim/vim-pencil", -- Improves editing for Markdown and text files
+    lazy = false,
+    ft = "markdown", -- Load only for Markdown files
   },
   {
-    "nvim-treesitter/nvim-treesitter", -- Tree-sitter support for Markdown
+    "godlygeek/tabular", -- Helps with table formatting in Markdown
     lazy = false,
-    run = ":TSUpdate",
+    ft = "markdown",
   },
 
   -- Auto-completion
@@ -91,29 +97,29 @@ require("lazy").setup({
 vim.cmd([[set number]])
 vim.cmd([[set syntax=on]])
 
--- Highlight window separators
+-- Make window separators less bright
 vim.cmd [[
   highlight WinSeparator guifg=#3b3b3b guibg=None
 ]]
 
-vim.g.mapleader = " "
+vim.g.mapleader = " " -- Set space as leader
 vim.api.nvim_set_keymap("n", "<leader>x", ":echo 'Leader key works!'<CR>", { noremap = true, silent = true })
 
 -- Indentation settings
-vim.o.tabstop = 2
-vim.o.shiftwidth = 2
-vim.o.softtabstop = 2
-vim.o.expandtab = true
-vim.o.smarttab = true
-vim.o.autoindent = true
-vim.o.smartindent = true
+vim.o.tabstop = 2       -- Number of spaces that a <Tab> counts for
+vim.o.shiftwidth = 2    -- Number of spaces for auto-indent
+vim.o.softtabstop = 2   -- Number of spaces for <Tab> in insert mode
+vim.o.expandtab = true  -- Use spaces instead of tabs
+vim.o.smarttab = true   -- Makes Tab behavior smarter
+vim.o.autoindent = true -- Copy indent from current line
+vim.o.smartindent = true -- Auto-indent in programming languages
 
--- Cursor and scrolling behavior
-vim.o.scrolloff = 0
+-- Cursor and Scrolling Behavior
+vim.o.scrolloff = 0 -- Prevent cursor movement on scrolling
 
 -- Relative Line Numbers
-vim.o.number = true
-vim.o.relativenumber = true
+vim.o.number = true           -- Enable absolute line number for the current line
+vim.o.relativenumber = true   -- Enable relative line numbers for all other lines
 
 -- Clipboard settings
 vim.o.clipboard = "unnamedplus"
@@ -121,12 +127,19 @@ vim.o.clipboard = "unnamedplus"
 -- GUI font
 vim.o.guifont = "Monaco:h24"
 
--- Filetype settings for Markdown
+-- Markdown Settings
 vim.cmd([[
-  autocmd BufRead,BufNewFile *.md set filetype=markdown
-  autocmd FileType markdown setlocal wrap
-  autocmd FileType markdown setlocal spell
+  augroup MarkdownSettings
+    autocmd!
+    autocmd BufRead,BufNewFile *.md set filetype=markdown
+    autocmd FileType markdown setlocal conceallevel=0
+  augroup END
 ]])
+
+-- Configure vim-markdown
+vim.g.vim_markdown_folding_disabled = 1 -- Disable folding
+vim.g.vim_markdown_conceal = 0         -- Show all symbols (like stars for bold)
+vim.g.vim_markdown_math = 1           -- Enable math rendering
 
 -- NERDTree keybinding with refresh functionality
 vim.api.nvim_set_keymap("n", "<C-n>", ":call ToggleAndRefreshNERDTree()<CR>", { noremap = true, silent = true })
@@ -145,14 +158,78 @@ endfunction
 -- Telescope keybindings
 vim.api.nvim_set_keymap("n", "<C-q>", ":Telescope find_files<CR>", { noremap = true, silent = true })
 
+-- Custom :Delete command to delete the current file
+vim.cmd([[
+command! Delete call DeleteCurrentFile()
+function! DeleteCurrentFile()
+  let l:current_file = expand('%:p')
+  if filereadable(l:current_file)
+    let l:confirm = confirm("Delete current file?", "&Yes\n&No", 2)
+    if l:confirm == 1
+      call delete(l:current_file)
+      bdelete!
+      echo "File deleted: " . l:current_file
+      call ToggleAndRefreshNERDTree()
+    endif
+  else
+    echo "No file to delete"
+  endif
+endfunction
+]])
+
+-- Custom keybindings for creating files and folders
+vim.cmd([[
+nnoremap <C-f> :call CreateNewFile()<CR>
+function! CreateNewFile()
+  let l:filename = input("Enter new file name: ")
+  if l:filename != ""
+    execute "edit " . l:filename
+    call ToggleAndRefreshNERDTree()
+  endif
+endfunction
+
+nnoremap <C-A-f> :call CreateNewFolder()<CR>
+function! CreateNewFolder()
+  let l:foldername = input("Enter new folder name: ")
+  if l:foldername != ""
+    let l:status = mkdir(l:foldername, "p")
+    if l:status == 0
+      echo "Failed to create folder: " . l:foldername
+    else
+      echo "Folder created: " . l:foldername
+      call ToggleAndRefreshNERDTree()
+    endif
+  endif
+endfunction
+]])
+
 -- Keybinding for selecting all text
 vim.api.nvim_set_keymap("n", "<C-a>", "ggVG", { noremap = true, silent = true })
 
 -- Keybinding for selecting current block
 vim.api.nvim_set_keymap("n", "<C-a><C-a>", "vip", { noremap = true, silent = true })
 
--- Glow keybinding to preview Markdown in terminal
-vim.api.nvim_set_keymap("n", "<leader>p", ":Glow<CR>", { noremap = true, silent = true })
+-- ToggleTerm keybindings
+require("toggleterm").setup({
+  size = 20,
+  shade_filetypes = {},
+  direction = "float",
+  float_opts = {
+    border = "curved",
+    width = 100,
+    height = 30,
+    winblend = 3,
+  },
+  hide_numbers = true,
+  shade_terminals = true,
+  shading_factor = 2,
+  start_in_insert = true,
+  persist_size = true,
+  close_on_exit = true,
+})
+
+vim.api.nvim_set_keymap("n", "<C-t>", "<cmd>ToggleTerm direction=float<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<C-S-t>", "<cmd>ToggleTerm direction=float 2<CR>", { noremap = true, silent = true })
 
 -- Configure Auto-completion
 local cmp = require("cmp")
@@ -168,4 +245,3 @@ cmp.setup({
     { name = "path" },
   },
 })
-

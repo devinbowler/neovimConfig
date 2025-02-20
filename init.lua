@@ -1,3 +1,14 @@
+-- Bootstrap lazy.nvim if it's not installed
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git", "clone", "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", lazypath
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
 -- Prepend lazy.nvim to the runtimepath
 vim.opt.rtp:prepend("C:/Users/devin/.local/share/nvim/lazy/lazy.nvim")
 
@@ -9,9 +20,34 @@ require("lazy").setup({
     lazy = false, -- Load immediately
   },
   {
-    "nvim-telescope/telescope.nvim", -- File finder
-    dependencies = { "nvim-lua/plenary.nvim" },
-    lazy = false, -- Load immediately
+    "nvim-telescope/telescope.nvim",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-telescope/telescope-fzf-native.nvim", -- Add this line
+    },
+    lazy = false,
+    config = function()
+      local telescope = require("telescope")
+
+      telescope.setup({
+        defaults = {
+          mappings = {
+            i = {
+              ["<C-k>"] = require("telescope.actions").move_selection_previous, -- Move up
+              ["<C-j>"] = require("telescope.actions").move_selection_next, -- Move down
+            },
+          },
+        },
+      })
+
+      -- Load the fzf extension
+      require("telescope").load_extension("fzf")
+    end,
+  },
+  {
+    "nvim-telescope/telescope-fzf-native.nvim",
+    build = "make",
+    lazy = false,
   },
   {
     "vim-airline/vim-airline", -- Status line
@@ -32,38 +68,10 @@ require("lazy").setup({
   },
 
   -- Themes and appearance
---  {
---    "sixfourtwelve/bore.vim", -- Bore theme
---    lazy = false,
---    config = function()
---      -- Enable the Bore theme
---      vim.opt.background = "dark" -- Set the background to dark
---      vim.cmd("colorscheme bore") -- Set the Bore colorscheme
-      -- Enable true colors for the best experience
---      if vim.fn.has("termguicolors") == 1 then
---        vim.opt.termguicolors = true
---      end
---    end,
---  },
-  {
-    "liuchengxu/space-vim-theme",
-    lazy = false,
-    config = function()
-      vim.opt.background = "dark" -- Ensure dark mode
-      vim.cmd("colorscheme space_vim_theme") -- Set the Space-Vim theme
-      if vim.fn.has("termguicolors") == 1 then
-        vim.opt.termguicolors = true -- Enable true colors
-      end
-    end,
-  },
-
-  -- Other Themes
   {
     "morhetz/gruvbox",
     lazy = false, -- Load immediately
   },
-
-
   -- Markdown Plugins
   {
     "plasticboy/vim-markdown", -- Popular Markdown plugin
@@ -158,50 +166,8 @@ endfunction
 -- Telescope keybindings
 vim.api.nvim_set_keymap("n", "<C-q>", ":Telescope find_files<CR>", { noremap = true, silent = true })
 
--- Custom :Delete command to delete the current file
-vim.cmd([[
-command! Delete call DeleteCurrentFile()
-function! DeleteCurrentFile()
-  let l:current_file = expand('%:p')
-  if filereadable(l:current_file)
-    let l:confirm = confirm("Delete current file?", "&Yes\n&No", 2)
-    if l:confirm == 1
-      call delete(l:current_file)
-      bdelete!
-      echo "File deleted: " . l:current_file
-      call ToggleAndRefreshNERDTree()
-    endif
-  else
-    echo "No file to delete"
-  endif
-endfunction
-]])
-
--- Custom keybindings for creating files and folders
-vim.cmd([[
-nnoremap <C-f> :call CreateNewFile()<CR>
-function! CreateNewFile()
-  let l:filename = input("Enter new file name: ")
-  if l:filename != ""
-    execute "edit " . l:filename
-    call ToggleAndRefreshNERDTree()
-  endif
-endfunction
-
-nnoremap <C-A-f> :call CreateNewFolder()<CR>
-function! CreateNewFolder()
-  let l:foldername = input("Enter new folder name: ")
-  if l:foldername != ""
-    let l:status = mkdir(l:foldername, "p")
-    if l:status == 0
-      echo "Failed to create folder: " . l:foldername
-    else
-      echo "Folder created: " . l:foldername
-      call ToggleAndRefreshNERDTree()
-    endif
-  endif
-endfunction
-]])
+-- Keybinding for live grep search
+vim.api.nvim_set_keymap("n", "<leader>f", ":Telescope live_grep<CR>", { noremap = true, silent = true })
 
 -- Keybinding for selecting all text
 vim.api.nvim_set_keymap("n", "<C-a>", "ggVG", { noremap = true, silent = true })

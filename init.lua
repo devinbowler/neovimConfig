@@ -72,11 +72,11 @@ require("lazy").setup({
     "yorickpeterse/vim-paper",
     name = "vim-paper", -- optional but useful if using colorscheme by name
     lazy = false,
-  },
-  {
-    "morhetz/gruvbox",
-    lazy = false, -- Load immediately
-  },
+  }
+  --{
+  --  "morhetz/gruvbox",
+  --  lazy = false, -- Load immediately
+  -- },
   -- Markdown Plugins
   {
     "plasticboy/vim-markdown", -- Popular Markdown plugin

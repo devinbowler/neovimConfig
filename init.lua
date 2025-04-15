@@ -69,10 +69,10 @@ require("lazy").setup({
 
   -- Themes and appearance
   {
-    "yorickpeterse/vim-paper",
-    name = "vim-paper", -- optional but useful if using colorscheme by name
+    "jonathanfilip/vim-lucius",
+    name = "lucius",
     lazy = false,
-  }
+  },
   --{
   --  "morhetz/gruvbox",
   --  lazy = false, -- Load immediately
@@ -106,8 +106,8 @@ require("lazy").setup({
   },
 })
 
-vim.o.background = "light"
-vim.cmd.colorscheme("paper")
+vim.o.background = "dark"
+vim.cmd.colorscheme("lucius")
 
 -- General Neovim settings
 vim.cmd([[set number]])

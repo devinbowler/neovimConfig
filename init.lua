@@ -1,4 +1,4 @@
-d-- Bootstrap lazy.nvim if it's not installed
+-- Bootstrap lazy.nvim if it's not installed
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -121,16 +121,6 @@ require("lazy").setup({
   },
 })
 
--- Theme configuration
--- Check if catppuccin plugin loaded successfully
-local ok, catppuccin = pcall(require, "catppuccin")
-if ok then
-  catppuccin.setup({
-    flavour = "latte",
-    transparent_background = true,
-  })
-end
-
 -- Set colorscheme to carbonfox
 vim.cmd [[colorscheme carbonfox]]
 
@@ -142,8 +132,8 @@ augroup user_colors
 augroup END
 ]])
 
--- Set up colorizer
-pcall(require('colorizer').setup)
+-- Initialize colorizer if available
+pcall(function() require('colorizer').setup() end)
 
 -- General Neovim settings
 vim.cmd([[set number]])

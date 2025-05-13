@@ -1,4 +1,4 @@
--- Bootstrap lazy.nvim if it's not installed
+d-- Bootstrap lazy.nvim if it's not installed
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -77,6 +77,21 @@ require("lazy").setup({
   --  "morhetz/gruvbox",
   --  lazy = false, -- Load immediately
   -- },
+  -- New theme plugins
+  {
+    "catppuccin/nvim",
+    name = "catppuccin",
+    lazy = false,
+  },
+  {
+    "EdenEast/nightfox.nvim", -- For carbonfox theme
+    lazy = false,
+  },
+  {
+    "norcalli/nvim-colorizer.lua", -- For colorizer functionality
+    lazy = false,
+  },
+  
   -- Markdown Plugins
   {
     "plasticboy/vim-markdown", -- Popular Markdown plugin
@@ -106,8 +121,29 @@ require("lazy").setup({
   },
 })
 
-vim.o.background = "dark"
-vim.cmd.colorscheme("lucius")
+-- Theme configuration
+-- Check if catppuccin plugin loaded successfully
+local ok, catppuccin = pcall(require, "catppuccin")
+if ok then
+  catppuccin.setup({
+    flavour = "latte",
+    transparent_background = true,
+  })
+end
+
+-- Set colorscheme to carbonfox
+vim.cmd [[colorscheme carbonfox]]
+
+-- Configure transparent background
+vim.cmd([[
+augroup user_colors
+  autocmd!
+  autocmd ColorScheme * highlight Normal ctermbg=NONE guibg=NONE
+augroup END
+]])
+
+-- Set up colorizer
+pcall(require('colorizer').setup)
 
 -- General Neovim settings
 vim.cmd([[set number]])

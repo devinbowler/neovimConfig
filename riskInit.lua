@@ -1,6 +1,14 @@
--- Bootstrap packer.nvim (works without LuaJIT, good for RISC-V)
+-----------------------------------------------------------
+-- Neovim config for Star64 / RISC-V (no LuaJIT required)
+-- Uses packer.nvim and Lua 5.1 only
+-----------------------------------------------------------
+
+-------------------------
+-- Bootstrap packer.nvim
+-------------------------
 local fn = vim.fn
 local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
+
 if fn.empty(fn.glob(install_path)) > 0 then
   fn.system({
     "git",
@@ -13,23 +21,34 @@ if fn.empty(fn.glob(install_path)) > 0 then
   vim.cmd("packadd packer.nvim")
 end
 
-require("packer").startup(function(use)
+local ok_packer, packer = pcall(require, "packer")
+if not ok_packer then
+  return
+end
+
+packer.init({
+  display = { non_interactive = true },
+})
+
+-------------------------
+-- Plugins
+-------------------------
+packer.startup(function(use)
   use "wbthomason/packer.nvim"
 
-  -- File tree / git / statusline
+  -- File tree / statusline / git
   use "preservim/nerdtree"
   use "vim-airline/vim-airline"
   use "tpope/vim-fugitive"
 
-  -- Telescope + fzf native
+  -- Telescope (no LuaJIT / no ffi)
   use {
     "nvim-telescope/telescope.nvim",
-    requires = {
-      { "nvim-lua/plenary.nvim" },
-      { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
-    },
+    requires = { "nvim-lua/plenary.nvim" },
     config = function()
-      local telescope = require("telescope")
+      local ok, telescope = pcall(require, "telescope")
+      if not ok then return end
+
       local actions = require("telescope.actions")
 
       telescope.setup({
@@ -43,16 +62,29 @@ require("packer").startup(function(use)
         },
       })
 
-      telescope.load_extension("fzf")
+      -- Optional: fzy-native (pure C, no LuaJIT/ffi requirement)
+      local has_fzy, _ = pcall(require, "telescope._extensions.fzy_native")
+      if has_fzy then
+        pcall(telescope.load_extension, "fzy_native")
+      end
     end,
   }
 
-  -- ToggleTerm
+  -- Optional: fast sorter that works without LuaJIT
+  use {
+    "nvim-telescope/telescope-fzy-native.nvim",
+    run = "make",
+  }
+
+  -- ToggleTerm floating terminal
   use {
     "akinsho/toggleterm.nvim",
     tag = "*",
     config = function()
-      require("toggleterm").setup({
+      local ok, toggleterm = pcall(require, "toggleterm")
+      if not ok then return end
+
+      toggleterm.setup({
         size = 20,
         direction = "float",
         float_opts = {
@@ -66,32 +98,42 @@ require("packer").startup(function(use)
         persist_size = true,
         close_on_exit = true,
       })
+
       vim.api.nvim_set_keymap(
         "n",
         "<C-t>",
         "<cmd>ToggleTerm direction=float<CR>",
         { noremap = true, silent = true }
       )
+      vim.api.nvim_set_keymap(
+        "n",
+        "<C-S-t>",
+        "<cmd>ToggleTerm direction=float 2<CR>",
+        { noremap = true, silent = true }
+      )
     end,
   }
 
-  -- Themes / appearance
+  -- Themes
   use "jonathanfilip/vim-lucius"
   use { "catppuccin/nvim", as = "catppuccin" }
   use {
     "EdenEast/nightfox.nvim",
     config = function()
+      -- Set carbonfox here so it's only called once plugin is loaded
       vim.cmd("colorscheme carbonfox")
     end,
   }
+
+  -- Colors / appearance helpers
   use "norcalli/nvim-colorizer.lua"
 
-  -- Markdown
+  -- Markdown plugins
   use { "plasticboy/vim-markdown", ft = { "markdown" } }
   use { "preservim/vim-pencil", ft = { "markdown" } }
   use { "godlygeek/tabular", ft = { "markdown" } }
 
-  -- Completion
+  -- Completion (pure Lua)
   use {
     "hrsh7th/nvim-cmp",
     requires = {
@@ -100,7 +142,9 @@ require("packer").startup(function(use)
       "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
-      local cmp = require("cmp")
+      local ok, cmp = pcall(require, "cmp")
+      if not ok then return end
+
       cmp.setup({
         mapping = {
           ["<Tab>"] = cmp.mapping.select_next_item(),
@@ -117,9 +161,11 @@ require("packer").startup(function(use)
   }
 end)
 
--- === Shared settings and extras ===
+-------------------------
+-- Post-plugin config
+-------------------------
 
--- Colorizer (safe if missing)
+-- Safe colorizer init
 pcall(function()
   require("colorizer").setup()
 end)
@@ -127,6 +173,7 @@ end)
 -- General options
 vim.o.number = true
 vim.o.relativenumber = true
+
 vim.o.tabstop = 2
 vim.o.shiftwidth = 2
 vim.o.softtabstop = 2
@@ -134,10 +181,25 @@ vim.o.expandtab = true
 vim.o.smarttab = true
 vim.o.autoindent = true
 vim.o.smartindent = true
+
 vim.o.scrolloff = 0
 vim.o.clipboard = "unnamedplus"
-vim.o.guifont = "Monaco:h12"
+
 vim.g.mapleader = " "
+vim.o.guifont = "Monaco:h12"
+
+-- Transparent background for all colorschemes
+vim.cmd([[
+augroup user_colors
+  autocmd!
+  autocmd ColorScheme * highlight Normal ctermbg=NONE guibg=NONE
+augroup END
+]])
+
+-- Window separator style
+vim.cmd([[
+  highlight WinSeparator guifg=#3b3b3b guibg=None
+]])
 
 -- Markdown settings
 vim.cmd([[
@@ -151,19 +213,6 @@ vim.cmd([[
 vim.g.vim_markdown_folding_disabled = 1
 vim.g.vim_markdown_conceal = 0
 vim.g.vim_markdown_math = 1
-
--- Transparent background
-vim.cmd([[
-augroup user_colors
-  autocmd!
-  autocmd ColorScheme * highlight Normal ctermbg=NONE guibg=NONE
-augroup END
-]])
-
--- Window separator color
-vim.cmd([[
-  highlight WinSeparator guifg=#3b3b3b guibg=None
-]])
 
 -- NERDTree toggle+refresh
 vim.api.nvim_set_keymap(
@@ -186,12 +235,29 @@ endfunction
 ]])
 
 -- Telescope mappings
-vim.api.nvim_set_keymap("n", "<C-q>", ":Telescope find_files<CR>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<leader>f", ":Telescope live_grep<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap(
+  "n",
+  "<C-q>",
+  ":Telescope find_files<CR>",
+  { noremap = true, silent = true }
+)
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>f>",
+  ":Telescope live_grep<CR>",
+  { noremap = true, silent = true }
+)
 
--- Select all
+-- Select all text
 vim.api.nvim_set_keymap("n", "<C-a>", "ggVG", { noremap = true, silent = true })
+
+-- Select current block
 vim.api.nvim_set_keymap("n", "<C-a><C-a>", "vip", { noremap = true, silent = true })
 
--- Test leader
-vim.api.nvim_set_keymap("n", "<leader>x", ":echo 'Leader key works!'<CR>", { noremap = true, silent = true })
+-- Simple test mapping for leader
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>x",
+  ":echo 'Leader key works!'<CR>",
+  { noremap = true, silent = true }
+)
